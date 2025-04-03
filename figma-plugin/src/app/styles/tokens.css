@@ -1,0 +1,129 @@
+/* Token related styles */
+.token-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-surface);
+}
+
+.token-item {
+  padding: 10px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 12px;
+}
+
+.token-item:last-child {
+  border-bottom: none;
+}
+
+.token-item strong {
+  color: var(--color-text-primary);
+  font-size: 13px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.token-name {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.token-value {
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.token-path {
+  font-size: 10px;
+  color: #888;
+  margin-top: 6px;
+  font-family: monospace;
+  background-color: #222;
+  padding: 3px 6px;
+  border-radius: 3px;
+  overflow-x: auto;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.token-selector {
+  font-size: 10px;
+  color: var(--color-primary);
+  margin-top: 4px;
+  font-family: monospace;
+  opacity: 0.8;
+}
+
+.color-preview {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  margin-right: 6px;
+  border: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.token-group {
+  margin-bottom: 16px;
+}
+
+.token-group-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--color-primary);
+  font-size: 13px;
+}
+
+.token-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-left: 6px;
+  background-color: var(--color-surface-light);
+  color: var(--color-text-secondary);
+}
+
+/* Token type-specific styles */
+.token-content {
+  font-style: italic;
+  padding: 2px 6px;
+  background-color: rgba(99, 102, 241, 0.1);
+  border-radius: 3px;
+}
+
+.token-icon {
+  font-size: 16px;
+  margin-right: 6px;
+}
+
+/* Token filters */
+.token-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.token-filter {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: var(--color-surface-light);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.token-filter.active {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.token-filter:hover:not(.active) {
+  border-color: var(--color-primary);
+}
