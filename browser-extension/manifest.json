@@ -1,21 +1,14 @@
 {
-    "manifest_version": 3,
-    "name": "SpotLight - Website Comparison Tool",
-    "version": "1.0",
-    "description": "Compare website designs against your design tokens",
-    "action": {
-      "default_popup": "popup/popup.html"
-    },
-    "permissions": [
-      "storage",
-      "activeTab",
-      "scripting"
-    ],
-    "host_permissions": [
-      "http://*/*",
-      "https://*/*"
-    ],
-    "background": {
-      "service_worker": "background.js"
-    }
+  "manifest_version": 3,
+  "name": "SpotLight - Website Comparison Tool",
+  "version": "1.0",
+  "description": "Compare website designs against your design tokens",
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "background": {
+    "service_worker": "background.js"
   }
+}

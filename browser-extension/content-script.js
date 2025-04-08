@@ -1,7 +1,5 @@
-// content-script.js - this runs in the context of the web page
-console.log("SpotLight content script loaded");
+console.log('SpotLight content script loaded');
 
-// Global variables
 let isSelectionActive = false;
 let highlightOverlay = null;
 let selectionMessage = null;
@@ -37,8 +35,7 @@ function createSelectionMessage() {
   message.style.fontWeight = 'bold';
   message.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
   message.style.display = 'none';
-  
-  // Add cancel button
+
   const cancelBtn = document.createElement('button');
   cancelBtn.textContent = 'Cancel';
   cancelBtn.style.marginLeft = '10px';
@@ -48,79 +45,93 @@ function createSelectionMessage() {
   cancelBtn.style.borderRadius = '3px';
   cancelBtn.style.color = 'white';
   cancelBtn.style.cursor = 'pointer';
-  
-  cancelBtn.addEventListener('click', function(e) {
+
+  cancelBtn.addEventListener('click', function (e) {
     e.stopPropagation();
     deactivateSelection();
   });
-  
+
   message.appendChild(cancelBtn);
   document.body.appendChild(message);
   return message;
 }
 function positionHighlight(element) {
   if (!highlightOverlay || !element) return;
-  
+
   const rect = element.getBoundingClientRect();
-  highlightOverlay.style.top = (rect.top + window.scrollY) + 'px';
-  highlightOverlay.style.left = (rect.left + window.scrollX) + 'px';
+  highlightOverlay.style.top = rect.top + window.scrollY + 'px';
+  highlightOverlay.style.left = rect.left + window.scrollX + 'px';
   highlightOverlay.style.width = rect.width + 'px';
   highlightOverlay.style.height = rect.height + 'px';
   highlightOverlay.style.display = 'block';
 }
 function handleMouseOver(e) {
   if (!isSelectionActive) return;
-  
-  // Don't highlight our own UI elements
-  if (e.target.id === 'spotlight-overlay' || 
-      e.target.id === 'spotlight-message' ||
-      e.target.closest('#spotlight-message')) {
+  if (
+    e.target.id === 'spotlight-overlay' ||
+    e.target.id === 'spotlight-message' ||
+    e.target.closest('#spotlight-message')
+  ) {
     return;
   }
-  
+
   positionHighlight(e.target);
 }
 function handleClick(e) {
   if (!isSelectionActive) return;
-  
-  // Don't select our own UI elements
-  if (e.target.id === 'spotlight-overlay' || 
-      e.target.id === 'spotlight-message' ||
-      e.target.closest('#spotlight-message')) {
+
+  if (
+    e.target.id === 'spotlight-overlay' ||
+    e.target.id === 'spotlight-message' ||
+    e.target.closest('#spotlight-message')
+  ) {
     return;
   }
-  
+
   e.preventDefault();
   e.stopPropagation();
-  
+
   const selectedElement = e.target;
-  const styles = getElementStyles(selectedElement);
-  
-  // Send the data back to the background script
-  chrome.runtime.sendMessage({
-    action: 'elementSelected',
-    tagName: selectedElement.tagName.toLowerCase(),
-    id: selectedElement.id,
-    className: selectedElement.className,
-    styles: styles
-  }).then(response => {
-    console.log("Element selection sent to background script, response:", response);
-    
-    // Show confirmation
-    showConfirmation();
-    
-    // Deactivate selection
+  console.log('Selected element:', selectedElement.tagName);
+
+  try {
+    const styles = getElementStyles(selectedElement, null);
+    console.log(
+      'Extracted styles for',
+      styles.tagName,
+      'with',
+      styles.children ? styles.children.length : 0,
+      'children'
+    );
+
+    chrome.runtime
+      .sendMessage({
+        action: 'elementSelected',
+        tagName: selectedElement.tagName.toLowerCase(),
+        id: selectedElement.id,
+        className: selectedElement.className,
+        styles: styles,
+      })
+      .then((response) => {
+        console.log('Element selection sent to background script, response:', response);
+        showConfirmation();
+        deactivateSelection();
+      })
+      .catch((error) => {
+        console.error('Error sending element selection:', error);
+        alert('Error sending selection data. Please try again.');
+        deactivateSelection();
+      });
+  } catch (error) {
+    console.error('Error in element selection process:', error);
+    alert('Error during element selection. Please try again.');
     deactivateSelection();
-  }).catch(error => {
-    console.error("Error sending element selection:", error);
-    alert("Error sending selection data. Please try again.");
-    deactivateSelection();
-  });
+  }
 }
 
 function showConfirmation() {
   const confirmation = document.createElement('div');
-  confirmation.textContent = "Element selected! Click the extension icon to see details.";
+  confirmation.textContent = 'Element selected! Click the extension icon to see details.';
   confirmation.style.position = 'fixed';
   confirmation.style.top = '10px';
   confirmation.style.left = '50%';
@@ -132,19 +143,24 @@ function showConfirmation() {
   confirmation.style.zIndex = '999999';
   confirmation.style.fontFamily = 'Arial, sans-serif';
   confirmation.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
-  
+
   document.body.appendChild(confirmation);
-  
+
   setTimeout(() => {
     confirmation.remove();
   }, 3000);
 }
 
-function getElementStyles(element) {
+function getElementStyles(element, path = null) {
   try {
+    console.log('Extracting styles for:', element.tagName, 'with path:', path);
     const computed = window.getComputedStyle(element);
-    
-    return {
+
+    const styles = {
+      tagName: element.tagName.toLowerCase(),
+      id: element.id || '',
+      classes: element.className ? element.className.split(' ').filter(Boolean) : [],
+      path: path || element.tagName.toLowerCase(),
       color: computed.color || '',
       backgroundColor: computed.backgroundColor || '',
       fontSize: computed.fontSize || '',
@@ -155,28 +171,64 @@ function getElementStyles(element) {
         top: computed.marginTop || '0px',
         right: computed.marginRight || '0px',
         bottom: computed.marginBottom || '0px',
-        left: computed.marginLeft || '0px'
+        left: computed.marginLeft || '0px',
       },
       padding: {
         top: computed.paddingTop || '0px',
         right: computed.paddingRight || '0px',
         bottom: computed.paddingBottom || '0px',
-        left: computed.paddingLeft || '0px'
+        left: computed.paddingLeft || '0px',
       },
-      borderRadius: computed.borderRadius || ''
+      borderRadius: computed.borderRadius || '',
+      children: [],
     };
+
+    if (element.children && element.children.length > 0) {
+      console.log(`Processing ${element.children.length} children for ${element.tagName}`);
+      const maxChildren = 10;
+      const processedChildren = Math.min(element.children.length, maxChildren);
+
+      for (let i = 0; i < processedChildren; i++) {
+        const child = element.children[i];
+
+        const childPath = path
+          ? `${path} > ${child.tagName.toLowerCase()}:nth-child(${i + 1})`
+          : `${child.tagName.toLowerCase()}:nth-child(${i + 1})`;
+
+        // get children recursively
+        try {
+          const childStyles = getElementStyles(child, childPath);
+          if (childStyles) {
+            styles.children.push(childStyles);
+          }
+        } catch (childError) {
+          console.error(`Error processing child ${i}:`, childError);
+          styles.children.push({
+            tagName: child.tagName.toLowerCase(),
+            error: childError.message,
+          });
+        }
+      }
+
+      // too many children
+      if (element.children.length > maxChildren) {
+        styles.children.push({
+          tagName: 'note',
+          info: `${element.children.length - maxChildren} more children not shown due to size limits`,
+        });
+      }
+    }
+
+    return styles;
   } catch (error) {
-    console.error("Error getting computed styles:", error);
+    console.error('Error getting styles for', element.tagName, error);
     return {
-      color: '',
-      backgroundColor: '',
-      fontSize: '',
-      fontFamily: '',
-      fontWeight: '',
-      lineHeight: '',
-      margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' },
-      padding: { top: '0px', right: '0px', bottom: '0px', left: '0px' },
-      borderRadius: ''
+      tagName: element.tagName.toLowerCase(),
+      id: element.id || '',
+      classes: element.className ? element.className.split(' ').filter(Boolean) : [],
+      path: path || element.tagName.toLowerCase(),
+      error: error.message,
+      children: [],
     };
   }
 }
@@ -189,17 +241,17 @@ function handleKeyDown(e) {
 
 function activateSelection() {
   if (isSelectionActive) return;
-  
-  console.log("Activating element selection");
+
+  console.log('Activating element selection');
   isSelectionActive = true;
-  
+
   if (!highlightOverlay) {
     highlightOverlay = createHighlightOverlay();
   }
   if (!selectionMessage) {
     selectionMessage = createSelectionMessage();
   }
-  
+
   selectionMessage.style.display = 'block';
   document.addEventListener('mouseover', handleMouseOver, true);
   document.addEventListener('click', handleClick, true);
@@ -209,17 +261,17 @@ function activateSelection() {
 
 function deactivateSelection() {
   if (!isSelectionActive) return;
-  
-  console.log("Deactivating element selection");
+
+  console.log('Deactivating element selection');
   isSelectionActive = false;
-  
+
   if (highlightOverlay) {
     highlightOverlay.style.display = 'none';
   }
   if (selectionMessage) {
     selectionMessage.style.display = 'none';
   }
-  
+
   document.removeEventListener('mouseover', handleMouseOver, true);
   document.removeEventListener('click', handleClick, true);
   document.removeEventListener('keydown', handleKeyDown, true);
@@ -228,19 +280,19 @@ function deactivateSelection() {
 
 // listeners
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("Content script received message:", message);
-  
+  console.log('Content script received message:', message);
+
   if (message.action === 'activateElementSelection') {
     activateSelection();
     sendResponse({ success: true });
     return true;
   }
-  
+
   if (message.action === 'deactivateElementSelection') {
     deactivateSelection();
     sendResponse({ success: true });
     return true;
   }
-  
+
   return false;
 });
