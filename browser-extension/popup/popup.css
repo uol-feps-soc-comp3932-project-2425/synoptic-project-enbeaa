@@ -155,3 +155,118 @@ button:disabled {
   gap: 8px;
   padding: 12px 0px;
 }
+
+/* Add these styles to your popup.css file */
+
+/* Matching tokens list */
+.matches-list {
+  margin-top: 10px;
+}
+
+.match-item {
+  background-color: #252525;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-left: 3px solid #4caf50;
+}
+
+.match-item p {
+  margin: 4px 0;
+}
+
+/* Token type badges */
+.token-type {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-left: 4px;
+}
+
+.token-type-color {
+  background-color: #9c27b0;
+  color: white;
+}
+
+.token-type-typography {
+  background-color: #2196f3;
+  color: white;
+}
+
+.token-type-spacing {
+  background-color: #ff9800;
+  color: white;
+}
+
+/* Color visualization */
+.color-sample {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Match score visualization */
+.match-score {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.score-bar {
+  height: 4px;
+  background-color: #3a3a3a;
+  border-radius: 2px;
+  margin-top: 2px;
+  overflow: hidden;
+}
+
+.score-fill {
+  height: 100%;
+  background-color: #8671ff;
+  border-radius: 2px;
+}
+
+/* Element path visualization */
+.element-path {
+  font-size: 11px;
+  color: #bbbbbb;
+  font-family: monospace;
+}
+
+.path-separator {
+  color: #666666;
+  margin: 0 3px;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 30px 20px;
+  color: #999;
+  font-size: 14px;
+}
+
+.empty-state i {
+  font-size: 32px;
+  margin-bottom: 10px;
+  opacity: 0.5;
+}
+
+/* Improve token count display */
+.token-count {
+  background-color: #333333;
+  border-radius: 4px;
+  padding: 6px 10px;
+  text-align: center;
+}
+
+.token-count strong {
+  color: #8671ff;
+}
