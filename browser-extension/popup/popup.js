@@ -1,3 +1,5 @@
+let currentTabId = null;
+
 document.addEventListener('DOMContentLoaded', function () {
   const fileInput = document.getElementById('fileInput');
   const importBtn = document.getElementById('importBtn');
@@ -76,6 +78,12 @@ document.addEventListener('DOMContentLoaded', function () {
       handleElementSelected(message);
     }
     return true;
+  });
+
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    if (tabs && tabs.length > 0) {
+      currentTabId = tabs[0].id;
+    }
   });
 });
 
@@ -166,130 +174,239 @@ function findMatchingTokensByHierarchy(elementData, designTokens) {
     return [];
   }
 
-  console.log('Using existing hierarchical styles data for matching');
-  const elementDepth = calculateElementDepth(styles);
-  console.log('Calculated element depth:', elementDepth);
+  const allMatches = [];
 
-  const matches = [];
+  // track which elements have certain properties already assigned to token
+  const assignedPropertyTypes = new Set();
 
-  designTokens.tokens.forEach((token) => {
-    const tokenDepth = token.path.length;
-    let matchScore = 0;
+  // track elements with typography (helps identify between color/bgcolor)
+  const elementsWithTypography = new Set();
 
-    // check depth similarity
-    const depthDifference = Math.abs(elementDepth - tokenDepth);
-    if (depthDifference === 0) matchScore += 30;
-    else if (depthDifference === 1) matchScore += 20;
-    else if (depthDifference <= 2) matchScore += 10;
-    else matchScore += 5;
+  function getSpecificPropertyType(token) {
+    if (token.type === 'color') {
+      return token.name.includes('fill') || token.name.includes('background') ? 'backgroundColor' : 'textColor';
+    }
 
-    // check style matching
-    matchScore += scoreStyleMatch(styles, token);
+    if (token.type === 'typography') {
+      return token.name.includes('fontSize') ? 'fontSize' : 'fontFamily';
+    }
 
-    // if score is good, add to matches
-    if (matchScore > 15) {
-      matches.push({
-        token: token,
-        score: matchScore,
+    if (token.type === 'spacing') {
+      if (token.name.includes('paddingLeft')) return 'paddingLeft';
+      if (token.name.includes('paddingRight')) return 'paddingRight';
+      if (token.name.includes('paddingTop')) return 'paddingTop';
+      if (token.name.includes('paddingBottom')) return 'paddingBottom';
+      if (token.name.includes('gap')) return 'gap';
+      return 'spacing';
+    }
+    return token.type;
+  }
+
+  // recursively find elements at tokens depth
+  function findElementsAtDepthRange(node, currentPath, targetDepth, results) {
+    // targetdepth is should b 0 based
+    const adjustedTargetDepth = Math.max(0, targetDepth - 1);
+    const depthDiff = adjustedTargetDepth - currentPath.length;
+
+    // add elements at the target +=1 for flexibility
+    if (depthDiff === 0 || depthDiff === 1) {
+      results.push({
+        node: node,
+        path: [...currentPath],
+        depthDiff: depthDiff,
       });
     }
-  });
 
-  matches.sort((a, b) => b.score - a.score);
-
-  console.log(`Found ${matches.length} potential matches`);
-
-  // Return top matches
-  return matches.map((match) => ({
-    ...match.token,
-    matchScore: match.score,
-  }));
-}
-
-function calculateElementDepth(styles) {
-  if (!styles) return 0;
-  if (!styles.children || styles.children.length === 0) return 1;
-
-  let maxChildDepth = 0;
-  styles.children.forEach((child) => {
-    const childDepth = calculateElementDepth(child);
-    maxChildDepth = Math.max(maxChildDepth, childDepth);
-  });
-
-  return 1 + maxChildDepth;
-}
-
-function scoreStyleMatch(styles, token) {
-  let score = 0;
-
-  score += scoreNodeStyleMatch(styles, token);
-
-  // check children is th token is deeper in hierarchy
-  if (token.path.length > 1 && styles.children && styles.children.length > 0) {
-    styles.children.forEach((child) => {
-      score = Math.max(score, scoreStyleMatch(child, token));
-    });
+    // stop at target depth or if theres no more children
+    if (depthDiff <= 0 || !node.children || node.children.length === 0) {
+      return;
+    }
+    for (let i = 0; i < node.children.length; i++) {
+      findElementsAtDepthRange(node.children[i], [...currentPath, i], targetDepth, results);
+    }
   }
 
-  return score;
-}
+  function scoreNodeMatch(node, token, propertyType, depthDiff) {
+    let score = 0;
 
-// Helper function to score a single node's style match with a token
-function scoreNodeStyleMatch(nodeStyles, token) {
-  let score = 0;
+    //score depth
+    if (depthDiff === 0) {
+      score += 20;
+    } else if (depthDiff === 1) {
+      score += 5;
+    }
 
-  if (token.type === 'color') {
-    if (token.name.includes('fill') || token.name.includes('background')) {
-      const nodeBgColor = extractRgbFromCssColor(nodeStyles.backgroundColor);
-      if (nodeBgColor && isColorSimilar(token.value, nodeBgColor)) {
-        score += 40;
+    if (token.type === 'color') {
+      if (propertyType === 'backgroundColor') {
+        const nodeBgColor = extractRgbFromCssColor(node.backgroundColor);
+        if (nodeBgColor) {
+          if (isColorSimilar(token.value, nodeBgColor)) {
+            score += 40;
+          } else {
+            score += 5;
+          }
+        }
+      } else {
+        const nodeColor = extractRgbFromCssColor(node.color);
+        if (nodeColor) {
+          if (isColorSimilar(token.value, nodeColor)) {
+            score += 40;
+          } else {
+            score += 5;
+          }
+        }
+      }
+    } else if (token.type === 'typography') {
+      if (propertyType === 'fontSize') {
+        const nodeFontSize = parseInt(node.fontSize);
+        if (!isNaN(nodeFontSize)) {
+          if (Math.abs(nodeFontSize - token.value) <= 2) {
+            score += 35;
+          } else {
+            score += 5;
+          }
+        }
+      } else if (propertyType === 'fontFamily') {
+        const nodeFont = node.fontFamily || '';
+        if (nodeFont) {
+          if (nodeFont.toLowerCase().includes(token.value.family.toLowerCase())) {
+            score += 30;
+          } else {
+            score += 5;
+          }
+        }
+      }
+    } else if (token.type === 'spacing') {
+      if (node.padding) {
+        if (propertyType === 'paddingLeft') {
+          const nodePadding = parseInt(node.padding.left);
+          if (!isNaN(nodePadding)) {
+            if (Math.abs(nodePadding - token.value) <= 4) {
+              score += 35;
+            } else {
+              score += 5;
+            }
+          }
+        } else if (propertyType === 'paddingRight') {
+          const nodePadding = parseInt(node.padding.right);
+          if (!isNaN(nodePadding)) {
+            if (Math.abs(nodePadding - token.value) <= 4) {
+              score += 35;
+            } else {
+              score += 5;
+            }
+          }
+        } else if (propertyType === 'paddingTop') {
+          const nodePadding = parseInt(node.padding.top);
+          if (!isNaN(nodePadding)) {
+            if (Math.abs(nodePadding - token.value) <= 4) {
+              score += 35;
+            } else {
+              score += 5;
+            }
+          }
+        } else if (propertyType === 'paddingBottom') {
+          const nodePadding = parseInt(node.padding.bottom);
+          if (!isNaN(nodePadding)) {
+            if (Math.abs(nodePadding - token.value) <= 4) {
+              score += 35;
+            } else {
+              score += 5;
+            }
+          }
+        } else if (propertyType === 'gap') {
+          score += 5;
+        }
+      }
+    }
+
+    return score;
+  }
+
+  // sort tokens - typography highest priority to determine colour vs bg colour
+  const sortedTokens = [...designTokens.tokens].sort((a, b) => {
+    const typeOrder = { typography: 0, color: 1, spacing: 2 };
+    return typeOrder[a.type] - typeOrder[b.type];
+  });
+
+  for (const token of sortedTokens) {
+    const tokenDepth = token.path.length;
+    const propertyType = getSpecificPropertyType(token);
+
+    const elementsAtDepthRange = [];
+    findElementsAtDepthRange(styles, [], tokenDepth, elementsAtDepthRange);
+
+    let bestMatch = null;
+    let bestScore = 0;
+
+    for (const element of elementsAtDepthRange) {
+      const pathKey = element.path.join(',');
+      const propertyKey = `${pathKey}_${propertyType}`;
+
+      // skip if element already has token of that type assigned (unless padding)
+      const isPaddingProperty = propertyType.includes('padding');
+      if (assignedPropertyTypes.has(propertyKey) && !isPaddingProperty) {
+        continue;
+      }
+
+      let score = scoreNodeMatch(element.node, token, propertyType, element.depthDiff);
+
+      // bonus for fill on text
+      if (token.type === 'color' && token.name.includes('fill') && elementsWithTypography.has(pathKey)) {
+        if (propertyType === 'textColor') {
+          score += 25;
+        } else {
+          score -= 10;
+        }
+      }
+
+      if (score > bestScore) {
+        bestMatch = element;
+        bestScore = score;
+      }
+    }
+
+    // add best match token
+    if (bestMatch && bestScore > 5) {
+      console.log(
+        `Assigning token ${token.name} to element at path [${bestMatch.path.join(', ')}] with score ${bestScore}`
+      );
+
+      allMatches.push({
+        token: token,
+        score: bestScore,
+        nodePath: bestMatch.path,
+      });
+
+      // tick off property type on element to prevent duplicates
+      const pathKey = bestMatch.path.join(',');
+      const propertyKey = `${pathKey}_${propertyType}`;
+      const isPaddingProperty = propertyType.includes('padding');
+      if (!isPaddingProperty) {
+        assignedPropertyTypes.add(propertyKey);
+      }
+
+      if (token.type === 'typography') {
+        elementsWithTypography.add(pathKey);
       }
     } else {
-      const nodeColor = extractRgbFromCssColor(nodeStyles.color);
-      if (nodeColor && isColorSimilar(token.value, nodeColor)) {
-        score += 40;
-      }
-    }
-  } else if (token.type === 'typography') {
-    if (token.name.includes('fontSize')) {
-      const nodeFontSize = parseInt(nodeStyles.fontSize);
-      if (!isNaN(nodeFontSize) && Math.abs(nodeFontSize - token.value) <= 2) {
-        score += 35;
-      }
-    } else if (token.name.includes('font') && token.value && token.value.family) {
-      const nodeFont = nodeStyles.fontFamily || '';
-      if (nodeFont.toLowerCase().includes(token.value.family.toLowerCase())) {
-        score += 30;
-      }
-    }
-  } else if (token.type === 'spacing') {
-    if (token.name.includes('padding') && nodeStyles.padding) {
-      let nodePadding = null;
-
-      if (token.name.includes('Left')) {
-        nodePadding = parseInt(nodeStyles.padding.left);
-      } else if (token.name.includes('Right')) {
-        nodePadding = parseInt(nodeStyles.padding.right);
-      } else if (token.name.includes('Top')) {
-        nodePadding = parseInt(nodeStyles.padding.top);
-      } else if (token.name.includes('Bottom')) {
-        nodePadding = parseInt(nodeStyles.padding.bottom);
-      }
-
-      if (nodePadding !== null && !isNaN(nodePadding) && Math.abs(nodePadding - token.value) <= 4) {
-        score += 35;
-      }
+      console.log(`No good match found for token ${token.name}`);
     }
   }
 
-  return score;
+  allMatches.sort((a, b) => b.score - a.score);
+
+  return allMatches.map((match) => ({
+    ...match.token,
+    matchScore: match.score,
+    nodePath: match.nodePath,
+  }));
 }
 
 function extractRgbFromCssColor(cssColor) {
   if (!cssColor || cssColor === 'transparent' || cssColor === 'rgba(0, 0, 0, 0)') {
     return null;
   }
-
   const match = cssColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([0-9.]+))?\)/);
   if (match) {
     return {
@@ -306,13 +423,399 @@ function extractRgbFromCssColor(cssColor) {
 function isColorSimilar(color1, color2) {
   if (!color1 || !color2) return false;
 
-  const threshold = 25; // RGB difference tolerance
+  const threshold = 25;
 
   const rDiff = Math.abs((color1.r || 0) - (color2.r || 0));
   const gDiff = Math.abs((color1.g || 0) - (color2.g || 0));
   const bDiff = Math.abs((color1.b || 0) - (color2.b || 0));
 
   return rDiff <= threshold && gDiff <= threshold && bDiff <= threshold;
+}
+
+function extractActualStyleValue(styles, token) {
+  let nodeStyles = styles;
+  const nodePath = token.nodePath || [];
+
+  for (let i = 0; i < nodePath.length; i++) {
+    const index = nodePath[i];
+    if (nodeStyles.children && nodeStyles.children.length > index) {
+      nodeStyles = nodeStyles.children[index];
+    } else {
+      console.warn(`Could not follow path at index ${i}, path may be invalid`);
+      break;
+    }
+  }
+
+  // extract value for token
+  if (token.type === 'color') {
+    if (token.name.includes('fill') || token.name.includes('background')) {
+      return {
+        property: 'Background Color',
+        value: extractRgbFromCssColor(nodeStyles.backgroundColor),
+        displayValue: convertRgbToHex(extractRgbFromCssColor(nodeStyles.backgroundColor)),
+        nodePath: nodePath,
+      };
+    } else {
+      return {
+        property: 'Text Color',
+        value: extractRgbFromCssColor(nodeStyles.color),
+        displayValue: convertRgbToHex(extractRgbFromCssColor(nodeStyles.color)),
+        nodePath: nodePath,
+      };
+    }
+  } else if (token.type === 'typography') {
+    if (token.name.includes('fontSize')) {
+      return {
+        property: 'Font Size',
+        value: parseInt(nodeStyles.fontSize),
+        displayValue: nodeStyles.fontSize,
+        nodePath: nodePath,
+      };
+    } else if (token.name.includes('font')) {
+      let fontWeight = nodeStyles.fontWeight || '400';
+
+      return {
+        property: 'Font Weight',
+        value: parseInt(fontWeight),
+        displayValue: fontWeight,
+        nodePath: nodePath,
+      };
+    }
+  } else if (token.type === 'spacing') {
+    if (!nodeStyles.padding) {
+      return { property: 'Spacing', value: null, displayValue: 'N/A', nodePath: nodePath };
+    }
+
+    if (token.name.includes('paddingLeft')) {
+      return {
+        property: 'Padding Left',
+        value: parseInt(nodeStyles.padding.left),
+        displayValue: nodeStyles.padding.left,
+        nodePath: nodePath,
+      };
+    } else if (token.name.includes('paddingRight')) {
+      return {
+        property: 'Padding Right',
+        value: parseInt(nodeStyles.padding.right),
+        displayValue: nodeStyles.padding.right,
+        nodePath: nodePath,
+      };
+    } else if (token.name.includes('paddingTop')) {
+      return {
+        property: 'Padding Top',
+        value: parseInt(nodeStyles.padding.top),
+        displayValue: nodeStyles.padding.top,
+        nodePath: nodePath,
+      };
+    } else if (token.name.includes('paddingBottom')) {
+      return {
+        property: 'Padding Bottom',
+        value: parseInt(nodeStyles.padding.bottom),
+        displayValue: nodeStyles.padding.bottom,
+        nodePath: nodePath,
+      };
+    } else if (token.name.includes('gap')) {
+      return {
+        property: 'Gap',
+        value: parseInt(nodeStyles.gap),
+        displayValue: nodeStyles.gap || 'N/A',
+        nodePath: nodePath,
+      };
+    }
+  }
+
+  return { property: token.type, value: null, displayValue: 'N/A', nodePath: nodePath };
+}
+
+function convertRgbToHex(rgb) {
+  if (!rgb) return 'N/A';
+
+  const toHex = (value) => {
+    const hex = Math.round(value).toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+
+  return `#${toHex(rgb.r)}${toHex(rgb.g)}${toHex(rgb.b)}`.toUpperCase();
+}
+
+function formatTokenValue(token) {
+  if (!token || !token.value) return 'N/A';
+
+  if (token.type === 'color') {
+    const { r, g, b } = token.value;
+    return convertRgbToHex({ r, g, b });
+  }
+
+  if (token.type === 'typography') {
+    if (token.name.includes('fontSize')) {
+      return `${token.value}px`;
+    }
+    if (token.value.family) {
+      let weight = 400;
+      if (token.value.style) {
+        if (token.value.style.includes('Bold')) weight = 700;
+        else if (token.value.style.includes('Semi Bold')) weight = 600;
+        else if (token.value.style.includes('Medium')) weight = 500;
+        else if (token.value.style.includes('Light')) weight = 300;
+      }
+      return weight.toString();
+    }
+  }
+
+  if (token.type === 'spacing') {
+    return token.value.toString();
+  }
+
+  return token.value.toString();
+}
+
+function isExactMismatch(tokenValue, actualValue, tokenType) {
+  console.log('comparing', tokenValue, actualValue);
+  if (tokenType === 'color') {
+    if (!tokenValue || !actualValue.value) return true;
+
+    return (
+      tokenValue.r !== actualValue.value.r ||
+      tokenValue.g !== actualValue.value.g ||
+      tokenValue.b !== actualValue.value.b
+    );
+  } else if (tokenType === 'typography') {
+    if (typeof tokenValue === 'number') {
+      return tokenValue !== actualValue.value;
+    } else if (tokenValue && tokenValue.style) {
+      let expectedWeight = 400;
+      if (tokenValue.style.includes('Bold')) expectedWeight = 700;
+      else if (tokenValue.style.includes('Semi Bold')) expectedWeight = 600;
+      else if (tokenValue.style.includes('Medium')) expectedWeight = 500;
+      else if (tokenValue.style.includes('Light')) expectedWeight = 300;
+
+      return expectedWeight !== actualValue.value;
+    }
+  } else if (tokenType === 'spacing') {
+    return tokenValue !== actualValue.value;
+  }
+
+  return true;
+}
+
+function setupLightbulbListeners() {
+  const lightbulbButtons = document.querySelectorAll('.lightbulb-btn');
+
+  lightbulbButtons.forEach((button) => {
+    button.addEventListener('click', function () {
+      const mismatchRow = this.closest('.mismatch-row');
+      const property = mismatchRow.getAttribute('data-property');
+      let nodePath = [];
+
+      const nodePathAttr = mismatchRow.getAttribute('data-node-path');
+
+      try {
+        if (nodePathAttr && nodePathAttr !== 'undefined') {
+          nodePath = JSON.parse(nodePathAttr);
+        }
+      } catch (e) {
+        console.error('Error parsing node path:', e);
+      }
+
+      console.log('Sending highlight request with nodePath:', nodePath);
+
+      // send to content for highlighting
+      if (currentTabId) {
+        chrome.tabs
+          .sendMessage(currentTabId, {
+            action: 'highlightElement',
+            nodePath: nodePath,
+            property: property,
+          })
+          .then((response) => {
+            console.log('Highlight response:', response);
+          })
+          .catch((error) => {
+            console.error('Error highlighting element:', error);
+          });
+      } else {
+        console.error('No active tab ID available');
+      }
+    });
+  });
+}
+
+function displayMismatches(element, matchingTokens) {
+  const resultsContainer = document.getElementById('comparison-results');
+  if (!resultsContainer) return;
+
+  const allMismatches = [];
+
+  matchingTokens.forEach((token) => {
+    const actualValue = extractActualStyleValue(element.styles, token);
+    const expectedValue = token.value;
+
+    if (isExactMismatch(expectedValue, actualValue, token.type)) {
+      allMismatches.push({
+        property: actualValue.property,
+        token: token,
+        expected: {
+          value: expectedValue,
+          display: formatTokenValue(token),
+        },
+        actual: {
+          value: actualValue.value,
+          display: actualValue.displayValue,
+          nodePath: actualValue.nodePath,
+        },
+        path: token.path.join('>'),
+        elementPath: JSON.stringify(actualValue.nodePath),
+      });
+    }
+  });
+
+  let html = `
+    <div class="section">
+      <div class="eye-icon-container">
+        <i class="fas fa-eye"></i> Spot the difference
+      </div>
+  `;
+
+  const elementGroups = {};
+
+  allMismatches.forEach((mismatch) => {
+    const elementPath = mismatch.elementPath;
+    if (!elementGroups[elementPath]) {
+      elementGroups[elementPath] = [];
+    }
+    elementGroups[elementPath].push(mismatch);
+  });
+
+  Object.keys(elementGroups).forEach((elementPathStr) => {
+    const mismatches = elementGroups[elementPathStr];
+    const nodePath = JSON.parse(elementPathStr);
+
+    let elementInfo = getElementInfo(element.styles, nodePath);
+
+    html += `
+      <div class="element-group">
+        <div class="element-header" data-node-path='${elementPathStr}'>
+          <span class="element-tag">${elementInfo.tag || 'Unknown'}</span>
+          ${elementInfo.id ? `<span class="element-id">#${elementInfo.id}</span>` : ''}
+          ${elementInfo.classes ? `<span class="element-classes">.${elementInfo.classes.join('.')}</span>` : ''}
+          <button class="highlight-element-btn" title="Highlight this element">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <div class="element-mismatches">
+    `;
+
+    mismatches.sort((a, b) => {
+      if (a.token.type !== b.token.type) {
+        const typePriority = { color: 0, typography: 1, spacing: 2 };
+        return typePriority[a.token.type] - typePriority[b.token.type];
+      }
+      return a.property.localeCompare(b.property);
+    });
+
+    mismatches.forEach((mismatch) => {
+      let expectedDisplay = mismatch.expected.display;
+      let actualDisplay = mismatch.actual.display;
+
+      if (mismatch.property.includes('Color')) {
+        expectedDisplay = `
+          <div class="color-value">
+            <div class="color-swatch" style="background-color: ${mismatch.expected.display};"></div>
+            ${mismatch.expected.display}
+          </div>
+        `;
+
+        actualDisplay = `
+          <div class="color-value">
+            <div class="color-swatch" style="background-color: ${mismatch.actual.display};"></div>
+            ${mismatch.actual.display}
+          </div>
+        `;
+      }
+
+      html += `
+        <div class="mismatch-row" data-property="${mismatch.property}" data-node-path='${JSON.stringify(
+        mismatch.actual.nodePath
+      )}'>
+        <div>
+          <div class="mismatch-property">${mismatch.property}</div>
+          <div class="mismatch-values">
+            <div class="expected-value">Expected value: ${expectedDisplay}</div>
+            <div class="actual-value">Implemented value: ${actualDisplay}</div>
+          </div>
+          </div>
+          <div class="mismatch-actions">
+            <button class="comment-btn" title="Add comment"><i class="fas fa-comment"></i></button>
+            <button class="lightbulb-btn" title="Highlight element on page"><i class="fas fa-lightbulb"></i></button>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+
+  resultsContainer.innerHTML = html;
+
+  setupLightbulbListeners();
+
+  setupElementHeaderListeners();
+
+  const tasksTabBtn = document.querySelector('.tab-btn[data-tab="tasks"]');
+  if (tasksTabBtn) {
+    tasksTabBtn.click();
+  }
+}
+
+function getElementInfo(styles, nodePath) {
+  let currentNode = styles;
+
+  for (const index of nodePath) {
+    if (currentNode.children && currentNode.children.length > index) {
+      currentNode = currentNode.children[index];
+    } else {
+      return { tag: 'Unknown', id: '', classes: [] };
+    }
+  }
+
+  return {
+    tag: currentNode.tagName || 'Unknown',
+    id: currentNode.id || '',
+    classes: currentNode.classes || [],
+  };
+}
+
+function setupElementHeaderListeners() {
+  const headerButtons = document.querySelectorAll('.element-header .highlight-element-btn');
+
+  headerButtons.forEach((button) => {
+    button.addEventListener('click', function () {
+      const header = this.closest('.element-header');
+      const nodePath = JSON.parse(header.getAttribute('data-node-path'));
+
+      if (currentTabId) {
+        chrome.tabs
+          .sendMessage(currentTabId, {
+            action: 'highlightElement',
+            nodePath: nodePath,
+            property: 'Element Highlight',
+          })
+          .then((response) => {
+            console.log('Highlight response:', response);
+          })
+          .catch((error) => {
+            console.error('Error highlighting element:', error);
+          });
+      } else {
+        console.error('No active tab ID available');
+      }
+    });
+  });
 }
 
 function handleElementSelected(data) {
@@ -331,19 +834,10 @@ function handleElementSelected(data) {
     return;
   }
 
-  // Log the hierarchy info
-  console.log('ELEMENT HIERARCHY INFO:');
-  console.log('Tag:', data.tagName);
-  console.log('ID:', data.id || 'None');
-  console.log('Classes:', data.className || 'None');
-
-  // Get design tokens from storage
   chrome.storage.local.get(['designTokens'], function (result) {
     if (!result.designTokens) {
       console.log('No design tokens found in storage');
-      displayComparisonResults({
-        error: 'No design tokens found. Please import design tokens first.',
-      });
+      displayMismatches(data, []);
       return;
     }
 
@@ -352,130 +846,6 @@ function handleElementSelected(data) {
 
     const matchingTokens = findMatchingTokensByHierarchy(data, designTokens);
     console.log('Matching tokens:', matchingTokens);
-
-    displayComparisonResults({
-      element: data,
-      matchingTokens: matchingTokens,
-    });
+    displayMismatches(data, matchingTokens);
   });
-}
-
-function displayComparisonResults(results) {
-  const resultsContainer = document.getElementById('comparison-results');
-  if (!resultsContainer) return;
-
-  if (results.error) {
-    resultsContainer.innerHTML = `
-      <div class="section">
-        <p>${results.error}</p>
-      </div>
-    `;
-    return;
-  }
-
-  const element = results.element;
-  const matchingTokens = results.matchingTokens || [];
-
-  let html = `
-    <div class="section">
-      <h2>Element Information</h2>
-      <p>Tag: <strong>${element.tagName || 'Unknown'}</strong></p>
-      ${element.id ? `<p>ID: <strong>#${element.id}</strong></p>` : ''}
-      ${element.className ? `<p>Classes: <strong>${element.className}</strong></p>` : ''}
-      ${element.hierarchyInfo ? `<p>Depth: <strong>${element.hierarchyInfo.depth}</strong></p>` : ''}
-    </div>
-    
-    <div class="section">
-      <h2>Comparison Summary</h2>
-      <div class="token-counts">
-        <div class="token-count">Total Tokens: <strong>${matchingTokens.length}</strong></div>
-        <div class="token-count">Matched: <strong>${matchingTokens.length}</strong></div>
-        <div class="token-count">Match Rate: <strong>100%</strong></div>
-      </div>
-    </div>
-  `;
-
-  if (matchingTokens.length > 0) {
-    html += `
-      <div class="section">
-        <h2>Matching Tokens (${matchingTokens.length})</h2>
-        <div class="matches-list">
-    `;
-
-    matchingTokens.forEach((token) => {
-      const tokenTypeBadge = `<span class="token-type token-type-${token.type}">${token.type}</span>`;
-      let colorSample = '';
-      if (token.type === 'color' && token.value) {
-        const { r, g, b, a = 1 } = token.value;
-        colorSample = `<span class="color-sample" style="background-color: rgba(${r}, ${g}, ${b}, ${a});"></span>`;
-      }
-
-      const formattedPath = token.path
-        .map(
-          (p, i) =>
-            `<span class="path-item">${p}</span>${
-              i < token.path.length - 1 ? '<span class="path-separator">›</span>' : ''
-            }`
-        )
-        .join('');
-
-      const scorePercentage = token.matchScore ? Math.min(100, Math.round((token.matchScore / 100) * 100)) : 0;
-
-      html += `
-        <div class="match-item">
-          <p>Token: <strong>${token.name}</strong> ${tokenTypeBadge}</p>
-          <p class="element-path">${formattedPath}</p>
-          <p>Value: <span style="color: #4CAF50;">${colorSample}${formatTokenValue(token)}</span></p>
-          <div class="match-score">
-            Match Score: <strong>${token.matchScore || 'N/A'}</strong>
-            <div class="score-bar">
-              <div class="score-fill" style="width: ${scorePercentage}%;"></div>
-            </div>
-          </div>
-        </div>
-      `;
-    });
-
-    html += `
-        </div>
-      </div>
-    `;
-  } else {
-    html += `
-      <div class="section">
-        <p>No matching tokens found. Try selecting a different element.</p>
-      </div>
-    `;
-  }
-
-  resultsContainer.innerHTML = html;
-
-  const tasksTabBtn = document.querySelector('.tab-btn[data-tab="tasks"]');
-  if (tasksTabBtn) {
-    tasksTabBtn.click();
-  }
-}
-
-function formatTokenValue(token) {
-  if (!token || !token.value) return 'N/A';
-
-  if (token.type === 'color') {
-    const { r, g, b, a = 1 } = token.value;
-    return `RGB(${r}, ${g}, ${b}${a < 1 ? `, ${a}` : ''})`;
-  }
-
-  if (token.type === 'typography') {
-    if (token.name.includes('fontSize')) {
-      return `${token.value}px`;
-    }
-    if (token.value.family) {
-      return `${token.value.family} ${token.value.style || ''}`;
-    }
-  }
-
-  if (token.type === 'spacing') {
-    return `${token.value}px`;
-  }
-
-  return JSON.stringify(token.value);
 }

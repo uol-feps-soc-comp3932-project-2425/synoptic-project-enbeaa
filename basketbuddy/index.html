@@ -1,177 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BasketBuddy</title>
-    <link rel="stylesheet" href="basketbuddy.css">
+    <link rel="stylesheet" href="basketbuddy.css" />
     <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  </head>
+  <body>
     <div class="container">
-        <header>
-            <div class="logo">
-                <i class="fa-solid fa-basket-shopping"></i>
-                <span>BasketBuddy</span>
-            </div>
-            <div class="search-bar">
-                <i class="fa-solid fa-search"></i>
-                <input type="text" placeholder="Search for product or categories">
-            </div>
-            <div class="header-icons">
-                <a href="#" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a>
-                <a href="#" class="user-icon"><i class="fa-solid fa-user"></i></a>
-            </div>
-        </header>
+      <header>
+        <div class="logo">
+          <i class="fa-solid fa-basket-shopping"></i>
+          <span>BasketBuddy</span>
+        </div>
+        <div class="search-bar">
+          <i class="fa-solid fa-search"></i>
+          <input type="text" placeholder="Search for product or categories" />
+        </div>
+        <div class="header-icons">
+          <a href="#" class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></a>
+          <a href="#" class="user-icon"><i class="fa-solid fa-user"></i></a>
+        </div>
+      </header>
 
-        <div class="banner">
-            <div class="banner-content">
-                <h1>Up to 50% off</h1>
-                <p>on Selected Electronics</p>
-                <button class="btn-primary">Go to Sale</button>
-            </div>
-            <div class="banner-image">
-                <div class="pound-sign pound-dark">£</div>
-                <div class="pound-sign pound-medium">£</div>
-                <div class="pound-sign pound-light">£</div>
-            </div>
+      <div class="banner">
+        <div class="banner-content">
+          <div>
+            <h1>Up to 50% off</h1>
+            <p>on Selected Electronics</p>
+          </div>
+          <button class="btn-primary">Go to Sale</button>
+        </div>
+        <div class="banner-image">
+          <div class="pound-sign pound-dark">£</div>
+          <div class="pound-sign pound-medium">£</div>
+          <div class="pound-sign pound-light">£</div>
+        </div>
+      </div>
+
+      <div class="products-section">
+        <h2>All Products</h2>
+
+        <div class="filters">
+          <div class="filter-dropdown">
+            <button class="filter-btn">All Categories <i class="fa-solid fa-chevron-down"></i></button>
+          </div>
+          <div class="filter-dropdown">
+            <button class="filter-btn">Price <i class="fa-solid fa-chevron-down"></i></button>
+          </div>
+          <div class="filter-dropdown">
+            <button class="filter-btn">Brand <i class="fa-solid fa-chevron-down"></i></button>
+          </div>
+          <div class="filter-dropdown">
+            <button class="filter-btn">Offer <i class="fa-solid fa-chevron-down"></i></button>
+          </div>
+
+          <div class="sort-by">
+            <button class="sort-btn">Sort By</button>
+          </div>
         </div>
 
-        <div class="products-section">
-            <h2>All Products</h2>
-            
-            <div class="filters">
-                <div class="filter-dropdown">
-                    <button class="filter-btn">
-                        All Categories <i class="fa-solid fa-chevron-down"></i>
-                    </button>
-                </div>
-                <div class="filter-dropdown">
-                    <button class="filter-btn">
-                        Price <i class="fa-solid fa-chevron-down"></i>
-                    </button>
-                </div>
-                <div class="filter-dropdown">
-                    <button class="filter-btn">
-                        Brand <i class="fa-solid fa-chevron-down"></i>
-                    </button>
-                </div>
-                <div class="filter-dropdown">
-                    <button class="filter-btn">
-                        Offer <i class="fa-solid fa-chevron-down"></i>
-                    </button>
-                </div>
-                
-                <div class="sort-by">
-                    <button class="sort-btn">Sort By</button>
-                </div>
+        <div class="product-grid">
+          <!-- Row 1 -->
+          <div class="product-card">
+            <div class="product-image" style="background-color: cadetblue"></div>
+            <div class="product-info">
+              <h3>Sony PSP - Pink</h3>
+              <span class="original-price">£160</span>
             </div>
+          </div>
 
-            <div class="product-grid">
-                <!-- Row 1 -->
-                <div class="product-card">
-                    <div class="product-image pink-bg">
-                        <img src="/api/placeholder/200/150" alt="Sony PSP">
-                    </div>
-                    <div class="product-info">
-                        <h3>Sony PSP - Pink</h3>
-                        <div class="product-price">
-                            <span class="original-price">£160</span>
-                            <span class="sale-price">£80</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="product-card">
-                    <div class="product-image">
-                        <img src="/api/placeholder/200/150" alt="Automated Vacuum">
-                    </div>
-                    <div class="product-info">
-                        <h3>Automated Vacuum</h3>
-                        <div class="product-price">
-                            <span class="sale-price">£170</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="product-card">
-                    <div class="product-image">
-                        <img src="/api/placeholder/200/150" alt="Patterned Stand Mixer">
-                    </div>
-                    <div class="product-info">
-                        <h3>Patterned Stand Mixer</h3>
-                        <div class="product-price">
-                            <span class="sale-price">£160</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="product-card">
-                    <div class="product-image split-bg">
-                        <img src="/api/placeholder/200/150" alt="Headphones">
-                    </div>
-                    <div class="product-info">
-                        <h3>Headphones</h3>
-                        <div class="product-price">
-                            <span class="sale-price">£70</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Row 2 (repeat products) -->
-                <div class="product-card">
-                    <div class="product-image pink-bg">
-                        <img src="/api/placeholder/200/150" alt="Sony PSP">
-                        <div class="sale-badge">50%</div>
-                    </div>
-                    <div class="product-info">
-                        <h3>Sony PSP - Pink</h3>
-                        <div class="product-price">
-                            <span class="original-price">£160</span>
-                            <span class="sale-price">£80</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="product-card">
-                    <div class="product-image">
-                        <img src="/api/placeholder/200/150" alt="Automated Vacuum">
-                    </div>
-                    <div class="product-info">
-                        <h3>Automated Vacuum</h3>
-                        <div class="product-price">
-                            <span class="sale-price">£170</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="product-card">
-                    <div class="product-image">
-                        <img src="/api/placeholder/200/150" alt="Patterned Stand Mixer">
-                    </div>
-                    <div class="product-info">
-                        <h3>Patterned Stand Mixer</h3>
-                        <div class="product-price">
-                            <span class="sale-price">£160</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="product-card">
-                    <div class="product-image split-bg">
-                        <img src="/api/placeholder/200/150" alt="Sony PSP">
-                    </div>
-                    <div class="product-info">
-                        <h3>Sony PSP - Pink</h3>
-                        <div class="product-price">
-                            <span class="original-price">£160</span>
-                            <span class="sale-price">£80</span>
-                        </div>
-                    </div>
-                </div>
+          <div class="product-card">
+            <div class="product-image" style="background-color: cadetblue"></div>
+            <div class="product-info">
+              <h3>Automated Vacuum</h3>
+              <div class="product-price">
+                <span class="sale-price">£170</span>
+              </div>
             </div>
+          </div>
+
+          <div class="product-card">
+            <div class="product-image" style="background-color: cadetblue"></div>
+            <div class="product-info">
+              <h3>Patterned Stand Mixer</h3>
+              <div class="product-price">
+                <span class="sale-price">£160</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="product-card">
+            <div class="product-image" style="background-color: cadetblue"></div>
+            <div class="product-info">
+              <h3>Headphones</h3>
+              <div class="product-price">
+                <span class="sale-price">£70</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 2 (repeat products) -->
+          <div class="product-card">
+            <div class="product-image" style="background-color: cadetblue"></div>
+            <div class="product-info">
+              <h3>Sony PSP - Pink</h3>
+              <div class="product-price">
+                <span class="original-price">£160</span>
+                <span class="sale-price">£80</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="product-card">
+            <div class="product-image" style="background-color: cadetblue"></div>
+            <div class="product-info">
+              <h3>Automated Vacuum</h3>
+              <div class="product-price">
+                <span class="sale-price">£170</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="product-card">
+            <div class="product-image" style="background-color: cadetblue"></div>
+            <div class="product-info">
+              <h3>Patterned Stand Mixer</h3>
+              <div class="product-price">
+                <span class="sale-price">£160</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="product-card">
+            <div class="product-image" style="background-color: cadetblue"></div>
+            <div class="product-info">
+              <h3>Sony PSP - Pink</h3>
+              <div class="product-price">
+                <span class="original-price">£160</span>
+                <span class="sale-price">£80</span>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
-</body>
+  </body>
 </html>

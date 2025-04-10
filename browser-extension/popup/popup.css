@@ -156,8 +156,6 @@ button:disabled {
   padding: 12px 0px;
 }
 
-/* Add these styles to your popup.css file */
-
 /* Matching tokens list */
 .matches-list {
   margin-top: 10px;
@@ -173,64 +171,6 @@ button:disabled {
 
 .match-item p {
   margin: 4px 0;
-}
-
-/* Token type badges */
-.token-type {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  margin-left: 4px;
-}
-
-.token-type-color {
-  background-color: #9c27b0;
-  color: white;
-}
-
-.token-type-typography {
-  background-color: #2196f3;
-  color: white;
-}
-
-.token-type-spacing {
-  background-color: #ff9800;
-  color: white;
-}
-
-/* Color visualization */
-.color-sample {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  margin-right: 6px;
-  vertical-align: middle;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* Match score visualization */
-.match-score {
-  font-size: 11px;
-  color: #999;
-  margin-top: 4px;
-}
-
-.score-bar {
-  height: 4px;
-  background-color: #3a3a3a;
-  border-radius: 2px;
-  margin-top: 2px;
-  overflow: hidden;
-}
-
-.score-fill {
-  height: 100%;
-  background-color: #8671ff;
-  border-radius: 2px;
 }
 
 /* Element path visualization */
@@ -259,7 +199,6 @@ button:disabled {
   opacity: 0.5;
 }
 
-/* Improve token count display */
 .token-count {
   background-color: #333333;
   border-radius: 4px;
@@ -269,4 +208,160 @@ button:disabled {
 
 .token-count strong {
   color: #8671ff;
+}
+
+.eye-icon-container {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: #fff;
+}
+
+.eye-icon-container i {
+  margin-right: 8px;
+  color: #ffffff;
+}
+
+.mismatch-row {
+  display: flex;
+  flex-direction: column;
+  background-color: #2a2a2a;
+  margin-bottom: 12px;
+  padding: 12px;
+}
+
+.mismatch-property {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.mismatch-values {
+  margin-bottom: 12px;
+}
+
+.expected-value,
+.actual-value {
+  font-size: 12px;
+  color: #bbb;
+  margin-bottom: 4px;
+}
+
+.expected-value strong,
+.actual-value strong {
+  color: #fff;
+  font-weight: 500;
+}
+
+.mismatch-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.comment-btn,
+.lightbulb-btn {
+  background-color: #3a3a3a;
+  border: none;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #8671ff;
+}
+
+.comment-btn:hover,
+.lightbulb-btn:hover {
+  background-color: #444;
+}
+
+.lightbulb-btn {
+  padding: 0;
+  font-size: 14px;
+}
+
+.tab-btn.active {
+  background-color: rgba(134, 113, 255, 0.2);
+  color: #8671ff;
+}
+
+.color-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.color-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.element-group {
+  overflow: hidden;
+  border-color: #3a3a3a;
+  border-width: 2px;
+}
+
+.element-header {
+  padding: 10px 12px;
+  background-color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.element-tag {
+  color: #ff5722;
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.element-id {
+  color: #8671ff;
+  font-family: monospace;
+}
+
+.element-classes {
+  color: #4caf50;
+  font-family: monospace;
+}
+
+.element-mismatches {
+  padding: 8px 0px;
+  gap: 8px;
+}
+
+.highlight-element-btn {
+  margin-left: auto;
+  background: transparent;
+  color: #ffffff;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.highlight-element-btn:hover {
+  background-color: rgba(134, 113, 255, 0.2);
+}
+
+.mismatch-row {
+  border-color: #3a3a3a;
+  border-radius: 4px;
+  border-style: solid;
+  border-width: 2px;
+}
+
+.mismatch-row:last-child {
+  margin-bottom: 0;
 }

@@ -72,6 +72,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.action === 'highlightElement') {
+    console.log('Background received highlight request:', message);
+
+    // forward to content script
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      if (tabs && tabs.length > 0) {
+        chrome.tabs
+          .sendMessage(tabs[0].id, message)
+          .then((response) => {
+            console.log('Highlight response:', response);
+            sendResponse(response);
+          })
+          .catch((error) => {
+            console.error('Error sending highlight message:', error);
+            sendResponse({ success: false, error: error.message });
+          });
+      } else {
+        console.error('No active tab found');
+        sendResponse({ success: false, error: 'No active tab found' });
+      }
+    });
+
+    return true;
+  }
+
   return false;
 });
 

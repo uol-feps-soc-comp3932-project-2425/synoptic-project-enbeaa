@@ -3,6 +3,7 @@ console.log('SpotLight content script loaded');
 let isSelectionActive = false;
 let highlightOverlay = null;
 let selectionMessage = null;
+let selectedRootElement = null;
 
 function createHighlightOverlay() {
   const overlay = document.createElement('div');
@@ -92,6 +93,7 @@ function handleClick(e) {
   e.stopPropagation();
 
   const selectedElement = e.target;
+  selectedRootElement = selectedElement;
   console.log('Selected element:', selectedElement.tagName);
 
   try {
@@ -278,9 +280,127 @@ function deactivateSelection() {
   document.body.style.cursor = '';
 }
 
-// listeners
+// highlight variables
+let mismatchHighlightOverlay = null;
+let mismatchTooltip = null;
+let highlightTimeout = null;
+
+function createMismatchHighlightOverlay() {
+  if (mismatchHighlightOverlay) return mismatchHighlightOverlay;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'spotlight-mismatch-overlay';
+  overlay.style.position = 'absolute';
+  overlay.style.border = '3px solid #FF5722';
+  overlay.style.backgroundColor = 'rgba(255, 87, 34, 0.15)';
+  overlay.style.pointerEvents = 'none';
+  overlay.style.zIndex = '999999';
+  overlay.style.display = 'none';
+  overlay.style.boxShadow = '0 0 10px rgba(255, 87, 34, 0.5)';
+  overlay.style.transition = 'opacity 0.3s';
+  document.body.appendChild(overlay);
+
+  mismatchHighlightOverlay = overlay;
+
+  return overlay;
+}
+
+function findElementByNodePath(nodePath) {
+  let element = selectedRootElement;
+
+  if (!element) return null;
+
+  for (const childIndex of nodePath) {
+    if (element.children && childIndex < element.children.length) {
+      element = element.children[childIndex];
+    } else {
+      return null;
+    }
+  }
+
+  return element;
+}
+
+function highlightMismatchElement(element, property) {
+  if (!element) return;
+
+  const overlay = createMismatchHighlightOverlay();
+
+  const rect = element.getBoundingClientRect();
+  overlay.style.top = rect.top + window.scrollY + 'px';
+  overlay.style.left = rect.left + window.scrollX + 'px';
+  overlay.style.width = rect.width + 'px';
+  overlay.style.height = rect.height + 'px';
+
+  overlay.style.display = 'block';
+
+  let pulseCount = 0;
+  const maxPulses = 3;
+
+  const pulseAnimation = setInterval(() => {
+    overlay.style.opacity = '0.4';
+
+    setTimeout(() => {
+      overlay.style.opacity = '1';
+    }, 500);
+
+    pulseCount++;
+    if (pulseCount >= maxPulses) {
+      clearInterval(pulseAnimation);
+    }
+  }, 1000);
+
+  if (highlightTimeout) {
+    clearTimeout(highlightTimeout);
+  }
+
+  highlightTimeout = setTimeout(() => {
+    hideHighlight();
+  }, 5000);
+
+  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function hideHighlight() {
+  if (mismatchHighlightOverlay) {
+    mismatchHighlightOverlay.style.display = 'none';
+  }
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Content script received message:', message);
+  if (message.action === 'highlightElement') {
+    console.log('Got highlight request:', message);
+
+    if (!selectedRootElement) {
+      console.error('No root element selected');
+      sendResponse({ success: false, error: 'No element was selected' });
+      return true;
+    }
+
+    let element = selectedRootElement;
+    const nodePath = message.nodePath || [];
+
+    if (nodePath && nodePath.length > 0) {
+      try {
+        for (let i = 0; i < nodePath.length; i++) {
+          const index = nodePath[i];
+          if (element.children && index < element.children.length) {
+            element = element.children[index];
+          } else {
+            console.warn(`Could not follow path at index ${i}, stopping at current element`);
+            break;
+          }
+        }
+      } catch (e) {
+        console.error('Error following node path:', e);
+      }
+    }
+
+    highlightMismatchElement(element, message.property);
+    sendResponse({ success: true });
+
+    return true;
+  }
 
   if (message.action === 'activateElementSelection') {
     activateSelection();
@@ -293,6 +413,4 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true });
     return true;
   }
-
-  return false;
 });
