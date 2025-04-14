@@ -1,5 +1,6 @@
 import { initializeOverviewTab } from './modules/overview-tab.js';
 import { initializeTasksTab } from './modules/tasks-tab.js';
+import { initializeFigmaTab } from './modules/figma-tab.js';
 
 document.addEventListener('DOMContentLoaded', function () {
   setupTabNavigation();
@@ -8,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   initializeOverviewTab(fileInput, importBtn);
   initializeTasksTab();
+  initializeFigmaTab();
 
   addNotificationStyles();
 });

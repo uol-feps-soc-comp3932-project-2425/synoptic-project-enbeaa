@@ -528,6 +528,7 @@ function displayMismatches(element, matchingTokens) {
     mismatches.forEach((mismatch) => {
       let expectedDisplay = mismatch.expected.display;
       let actualDisplay = mismatch.actual.display;
+      console.log(mismatch);
 
       if (mismatch.property.includes('Color')) {
         expectedDisplay = `
@@ -548,7 +549,7 @@ function displayMismatches(element, matchingTokens) {
       html += `
           <div class="mismatch-row" data-property="${mismatch.property}" data-node-path='${JSON.stringify(
         mismatch.actual.nodePath
-      )}'>
+      )}' data-token-node-id='${mismatch.token.nodeId}'>
             <div>
               <div class="mismatch-property">${mismatch.property}</div>
               <div class="mismatch-values">
@@ -579,6 +580,9 @@ function displayMismatches(element, matchingTokens) {
 
   const tasksTabBtn = document.querySelector('.tab-btn[data-tab="tasks"]');
   if (tasksTabBtn) {
+    setTimeout(() => {
+      document.dispatchEvent(new CustomEvent('mismatches-rendered'));
+    }, 100);
     tasksTabBtn.click();
   }
 }

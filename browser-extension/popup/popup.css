@@ -365,3 +365,255 @@ button:disabled {
 .mismatch-row:last-child {
   margin-bottom: 0;
 }
+
+/* Figma Integration Styles */
+
+/* Auth indicator */
+.auth-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.auth-indicator.logged-in {
+  background-color: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.auth-indicator.logged-out {
+  background-color: rgba(255, 87, 34, 0.1);
+  border: 1px solid rgba(255, 87, 34, 0.3);
+}
+
+.auth-indicator i {
+  font-size: 16px;
+}
+
+.auth-indicator.logged-in i {
+  color: #4caf50;
+}
+
+.auth-indicator.logged-out i {
+  color: #ff5722;
+}
+
+.auth-indicator p {
+  font-size: 13px;
+  color: #fff;
+  margin: 0;
+}
+
+/* Button styles */
+.primary-btn {
+  background-color: #8671ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.primary-btn:hover {
+  background-color: #5a3cd9;
+}
+
+.secondary-btn {
+  background-color: #3a3a3a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.secondary-btn:hover {
+  background-color: #444444;
+}
+
+/* Figma file linking */
+.figma-link-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.figma-link-form input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  background-color: #252525;
+  color: #ffffff;
+}
+
+.linked-file-item {
+  background-color: #252525;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.linked-file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.linked-file-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.linked-file-date {
+  font-size: 12px;
+  color: #999;
+}
+
+.linked-file-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.file-action-btn {
+  background-color: transparent;
+  color: #8671ff;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.file-action-btn:hover {
+  background-color: rgba(134, 113, 255, 0.1);
+}
+
+/* Comment UI */
+.comment-btn {
+  background-color: #3a3a3a;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #8671ff;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.comment-btn:hover {
+  background-color: #8671ff;
+  color: white;
+}
+
+.comment-added {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-left: 3px solid #4caf50;
+  padding: 4px 8px;
+  font-size: 11px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.comment-added i {
+  color: #4caf50;
+}
+
+.comment-link {
+  color: #8671ff;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.modal-content {
+  background-color: #2c2c2c;
+  margin: 10% auto;
+  width: 90%;
+  max-width: 500px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 16px;
+  background-color: #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #444;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.close-modal {
+  font-size: 24px;
+  font-weight: bold;
+  color: #999;
+  cursor: pointer;
+}
+
+.close-modal:hover {
+  color: #fff;
+}
+
+.modal-body {
+  padding: 16px;
+}
+
+#comment-text {
+  width: 100%;
+  height: 100px;
+  padding: 12px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background-color: #252525;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  resize: vertical;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+}
+
+.modal-footer {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid #444;
+}

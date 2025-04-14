@@ -1,54 +1,95 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SpotLight - Website Comparison Tool</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/fontawesome/all.min.css">
-  
-  <link rel="stylesheet" href="popup.css">
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="header-content">
-        <span>SpotLight - Website Comparison Tool</span>
-      </div>
-    </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SpotLight - Website Comparison Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../assets/fontawesome/all.min.css" />
 
-    <div class="banner">
-      <h1>Spotlight</h1>
-    </div>
-    
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="overview">Overview</button>
-      <button class="tab-btn" data-tab="tasks">My Tasks</button>
-    </div>
-    
-    <div class="tab-content" id="overview-tab">
-      <div class="section">
-        <h2>Import Design Tokens</h2>
-        <p>Upload your design tokens JSON file:</p>
-        <div class="import-area">
-          <input type="file" id="fileInput" accept=".json">
-          <button id="importBtn"><i class="fas fa-arrow-up-from-bracket"></i></button>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="header-content">
+          <span>SpotLight - Website Comparison Tool</span>
         </div>
       </div>
-    </div>
-    
-    <div class="tab-content" id="tasks-tab" style="display: none;">
-      <div class="section-header">
-      <div id="comparison-results">
+
+      <div class="banner">
+        <h1>Spotlight</h1>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="overview">Overview</button>
+        <button class="tab-btn" data-tab="tasks">My Tasks</button>
+        <button class="tab-btn" data-tab="figma">Figma</button>
+      </div>
+
+      <div class="tab-content" id="overview-tab">
         <div class="section">
-          <p>No comparison data yet. Import design tokens and select an element to start comparing.</p>
+          <h2>Import Design Tokens</h2>
+          <p>Upload your design tokens JSON file:</p>
+          <div class="import-area">
+            <input type="file" id="fileInput" accept=".json" />
+            <button id="importBtn"><i class="fas fa-arrow-up-from-bracket"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tasks-tab" style="display: none">
+        <div class="section-header">
+          <div id="comparison-results">
+            <div class="section">
+              <p>No comparison data yet. Import design tokens and select an element to start comparing.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="figma-tab" style="display: none">
+        <div class="section figma-auth-section">
+          <h2>Figma Integration</h2>
+          <div id="figma-auth-status" class="auth-status">
+            <p>Connect your Figma account to add comments directly to designs.</p>
+            <button id="figma-auth-btn" class="primary-btn"><i class="fab fa-figma"></i> Connect Figma Account</button>
+          </div>
+        </div>
+
+        <div class="section figma-file-section" style="display: none">
+          <h2>Link Figma File</h2>
+          <p>Connect your design tokens to a Figma file:</p>
+          <div class="figma-link-form">
+            <input type="text" id="figma-file-url" placeholder="Paste Figma file URL..." />
+            <button id="figma-link-btn" class="primary-btn"><i class="fas fa-link"></i> Link File</button>
+          </div>
+
+          <div id="figma-linked-files" class="linked-files-list"></div>
+        </div>
+      </div>
+
+      <div id="comment-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Add Comment to Figma</h2>
+            <span class="close-modal">&times;</span>
+          </div>
+          <div class="modal-body">
+            <textarea
+              id="comment-text"
+              placeholder="Please describe what cannot be resolved on this element"
+            ></textarea>
+          </div>
+          <div class="modal-footer">
+            <button id="cancel-comment" class="secondary-btn">Cancel</button>
+            <button id="submit-comment" class="primary-btn"><i class="fas fa-comment"></i> Add Comment to Figma</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-
-  <script type="module" src="popup.js"></script>
-</body>
+    <script type="module" src="popup.js"></script>
+  </body>
 </html>

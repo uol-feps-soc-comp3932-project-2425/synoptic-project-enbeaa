@@ -6,8 +6,8 @@
   "action": {
     "default_popup": "popup/popup.html"
   },
-  "permissions": ["storage", "activeTab", "scripting"],
-  "host_permissions": ["http://*/*", "https://*/*"],
+  "permissions": ["storage", "activeTab", "scripting", "identity"],
+  "host_permissions": ["http://*/*", "https://*/*", "https://api.figma.com/*", "https://*.figma.com/*"],
   "background": {
     "service_worker": "background.js"
   }
